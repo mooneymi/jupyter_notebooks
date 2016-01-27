@@ -65,6 +65,27 @@ flow_all$UW_Line = as.numeric(flow_all$UW_Line)
 new_flow_ids = paste(flow_all$ID, flow_all$Tissue, sep='_')
 sum(duplicated(new_flow_ids))
 
+## Read the previously cleaned data
+## Note: you may have to change the file path
+flow_prev = read.xls('../Cleaned_Data_Releases/9-Nov-2015/Lund_Flow_Full_3-Nov-2015_final.xlsx', 
+                     as.is=T, na.strings=c(""," ", "NA", "#DIV/0!"))
+
+## Check for duplicate IDs
+dup_ids1 = intersect(flow_prev$ID[flow_prev$Tissue=='brain'], flow_all$ID[flow_all$Tissue=='brain'])
+dup_ids2 = intersect(flow_prev$ID[flow_prev$Tissue=='spleen'], flow_all$ID[flow_all$Tissue=='spleen'])
+
+## Overwrite old data with new
+idx1 = which(flow_prev$ID %in% dup_ids1 & flow_prev$Tissue=='brain')
+idx2 = which(flow_prev$ID %in% dup_ids2 & flow_prev$Tissue=='spleen')
+idx_dups = c(idx1, idx2)
+print(length(idx_dups))
+idx_to_keep = setdiff(1:nrow(flow_prev), idx_dups)
+flow_prev = flow_prev[idx_to_keep,]
+flow_all = rbind(flow_prev[, flow_cn], flow_all[, flow_cn])
+
+## Check the dimensions of the dataframe
+dim(flow_all)
+
 ## Change all data columns to numeric
 for (i in 11:277) {
     flow_all[,i] = as.numeric(flow_all[,i])
@@ -80,5 +101,5 @@ flow_full = calc_ics_count_ratios(flow_full)
 flow_full = clean_inf_nan(flow_full)
 
 ## Save R data file
-write.table(flow_full, file='Lund_Flow_Full_29-Jan-2016_final.txt', col.names=T, row.names=F, quote=F, sep='\t', na='')
-save(flow_full, file='lund_flow_full_29-jan-2016_final.rda')
+write.table(flow_full, file='Lund_Flow_Full_11-Jan-2016_final.txt', col.names=T, row.names=F, quote=F, sep='\t', na='')
+save(flow_full, file='lund_flow_full_11-jan-2016_final.rda')
