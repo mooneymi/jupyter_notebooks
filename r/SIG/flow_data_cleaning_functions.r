@@ -1,3 +1,5 @@
+library(gdata)
+
 describe = function(obj) {
   if ('help' %in% names(attributes(obj))) {
     writeLines(attr(obj, 'help'))
@@ -12,6 +14,7 @@ read_flow_exp_file = function(f, cn_expected) {
   ### Parse the Treg panel - first sheet of the excel workbook
   ## Read the file
   dat1 = read.xls(f, sheet=1, verbose=F, header=F, as.is=T, na.strings=c("NA", "", " ", "#DIV/0!"))
+  print(sheetNames(f)[1])
   
   ## Identify the first row containing information
   start_row = min(which(!is.na(dat1[,1])))
@@ -56,6 +59,10 @@ read_flow_exp_file = function(f, cn_expected) {
       sheet_name = sheetNames(f)[sheet]
       ## Read the file, identify the first row containing information, and get column names
       dat2 = read.xls(f, sheet=sheet, verbose=F, header=F, as.is=T, na.strings=c("NA", "", " ", "#DIV/0!"))
+	  
+	  ## DEBUGGING / TESTING
+      #print(dim(dat2))
+	  
       start_row = min(which(dat2[,1]=='ID' | dat2[,1]=='UNC strain'))
       cn2 = dat2[start_row,]
       dat2 = dat2[,!is.na(cn2)]
@@ -124,6 +131,7 @@ read_flow_exp_file = function(f, cn_expected) {
   ## Parse the ICS Panel - the third (or fourth) sheet in the excel workbook
   ## Read the file, identify the first row containing information, and get column names
   dat3 = read.xls(f, sheet=(max(CD8_sheets)+1), verbose=F, header=F, as.is=T, na.strings=c("NA", "", " ", "#DIV/0!"))
+  print(sheetNames(f)[(max(CD8_sheets)+1)])
   start_row = min(which(dat3[,1]=='ID' | dat3[,1]=='UNC strain'))
   cn3 = dat3[start_row,]
   dat3 = dat3[,!is.na(cn3)]
@@ -220,11 +228,11 @@ read_flow_exp_file = function(f, cn_expected) {
 attr(read_flow_exp_file, 'help') = "
 This function parses flow cytometry data from an Excel workbook.
 
-Parameters
+Parameters:
 f: The Excel file name.
 cn_expected: A character vector containing the expected column names.
 
-Returns
+Returns:
 A dataframe containing the processed flow cytometry data.
 "
 
@@ -270,12 +278,12 @@ fix_column_names = function(cn, panel, start_col=8) {
 attr(fix_column_names, 'help') = "
 This function standardizes the column names of each flow cytometry panel.
 
-Parameters
+Parameters:
 cn: A character vector containing the original column names.
 panel: A string which will be appended to column names indicating the panel being processed (e.g. 'treg').
 start_column: A number indicating in which column the flow data starts (preceding columns are sample identifiers) 
 
-Returns
+Returns:
 A character vector containing the fixed column names.
 "
 
@@ -302,6 +310,15 @@ calc_treg_counts = function(flow_df) {
 	
 	return(flow_df)
 }
+attr(calc_treg_counts, 'help') = "
+This function calculates absolute cell counts for the Treg panel.
+
+Parameters:
+flow_df: The dataframe containing the flow cytometry data (total cell count, and percentages for all cell populations).
+
+Returns:
+A dataframe with columns for the cell counts added.
+"
 
 calc_tcell_counts = function(flow_df) {
 	## T cell parent cell populations
@@ -379,6 +396,15 @@ calc_tcell_counts = function(flow_df) {
 	
 	return(flow_df)
 }
+attr(calc_tcell_counts, 'help') = "
+This function calculates absolute cell counts for the T-Cell panel.
+
+Parameters:
+flow_df: The dataframe containing the flow cytometry data (total cell count, and percentages for all cell populations).
+
+Returns:
+A dataframe with columns for the cell counts added.
+"
 
 calc_ics_counts = function(flow_df) {
 	## ICS parent cell populations
@@ -486,6 +512,15 @@ calc_ics_counts = function(flow_df) {
 	
 	return(flow_df)
 }
+attr(calc_ics_counts, 'help') = "
+This function calculates absolute cell counts for the ICS panels.
+
+Parameters:
+flow_df: The dataframe containing the flow cytometry data (total cell count, and percentages for all cell populations).
+
+Returns:
+A dataframe with columns for the cell counts added.
+"
 
 calc_ics_percent_ratios = function(flow_df) {
 	ICS_NS4B_CD8pos_subpops = c("ics_NS4B_CD8_CD25pos", "ics_NS4B_CD8_CD44pos", "ics_NS4B_CD8_CD44neg_CD62Lpos", "ics_NS4B_CD8_CD44neg_CD62Lneg", 
@@ -592,6 +627,15 @@ calc_ics_percent_ratios = function(flow_df) {
 	
 	return(flow_df)
 }
+attr(calc_ics_percent_ratios, 'help') = "
+This function calculates ratios of sub-population percentages for the ICS panels (DMSO as the reference).
+
+Parameters:
+flow_df: The dataframe containing the flow cytometry data (total cell count, and percentages for all cell populations).
+
+Returns:
+A dataframe with columns for the ratios added.
+"
 
 calc_ics_count_ratios = function(flow_df) {
 	ICS_NS4B_CD8pos_subpops = c("ics_NS4B_CD8_CD25pos", "ics_NS4B_CD8_CD44pos", "ics_NS4B_CD8_CD44neg_CD62Lpos", "ics_NS4B_CD8_CD44neg_CD62Lneg", 
@@ -704,6 +748,15 @@ calc_ics_count_ratios = function(flow_df) {
 	
 	return(flow_df)
 }
+attr(calc_ics_count_ratios, 'help') = "
+This function calculates ratios of sub-population cell counts for the ICS panels (DMSO as the reference).
+
+Parameters:
+flow_df: The dataframe containing the flow cytometry data (total cell count, and percentages for all cell populations).
+
+Returns:
+A dataframe with columns for the ratios added.
+"
 
 clean_inf_nan = function(flow_df) {
 	for (i in 1:dim(flow_df)[2]) {
@@ -713,3 +766,12 @@ clean_inf_nan = function(flow_df) {
 	
 	return(flow_df)
 }
+attr(calc_ics_percent_ratios, 'help') = "
+This function cleans the results of the cell count and ratio calculations by removing an infinite or NaN values.
+
+Parameters:
+flow_df: The dataframe containing the full flow cytometry data.
+
+Returns:
+A cleaned dataframe.
+"
